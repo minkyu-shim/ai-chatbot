@@ -1,0 +1,16 @@
+# Secrets
+.env
+
+# Virtualenv
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# SQLite database files (but keep the data/ folder via .gitkeep)
+data/*.db
+data/*.db-journal

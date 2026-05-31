@@ -18,3 +18,7 @@ CLAUDE.md
 
 # macOS
 .DS_Store
+.idea/
+
+# PyCharm
+identifier.sqlite

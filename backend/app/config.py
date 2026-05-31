@@ -4,9 +4,14 @@ All runtime configuration must come through this module. No other module
 should read os.environ directly.
 """
 from functools import lru_cache
+from pathlib import Path
 from typing import List
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Absolute path to backend/data/app.db — works regardless of working directory.
+_DEFAULT_DB_PATH = Path(__file__).parent.parent / "data" / "app.db"
+_DEFAULT_DB_URL = f"sqlite:///{_DEFAULT_DB_PATH}"
 
 
 class Settings(BaseSettings):
@@ -36,7 +41,7 @@ class Settings(BaseSettings):
         return [o.strip() for o in self.cors_origins_raw.split(",") if o.strip()]
 
     # --- Database ---
-    database_url: str = "sqlite:///./data/app.db"
+    database_url: str = _DEFAULT_DB_URL
 
     # --- Auth ---
     jwt_secret_key: str = "change-me-in-real-env"

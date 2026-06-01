@@ -1,34 +1,24 @@
-import { useEffect, useState } from 'react'
-import './App.css'
-
-type HealthResponse = {
-  status: string
-  app: string
-  environment: string
-}
+import { Routes, Route, Navigate } from 'react-router-dom'
+import RequireAuth from './auth/RequireAuth'
+import LoginPage from './pages/LoginPage'
+import SignupPage from './pages/SignupPage'
+import HomePage from './pages/HomePage'
 
 function App() {
-  const [health, setHealth] = useState<HealthResponse | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetch('/api/health')
-      .then(async (r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`)
-        return (await r.json()) as HealthResponse
-      })
-      .then(setHealth)
-      .catch((e) => setError(String(e)))
-  }, [])
-
   return (
-    <div style={{ fontFamily: 'system-ui, sans-serif', padding: 24 }}>
-      <h1>Local LLM Chat — M0</h1>
-      <p>Backend health check:</p>
-      {error && <pre style={{ color: 'crimson' }}>Error: {error}</pre>}
-      {health && <pre>{JSON.stringify(health, null, 2)}</pre>}
-      {!health && !error && <p>Loading…</p>}
-    </div>
+    <Routes>
+      {/* Public routes */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
+
+      {/* Protected routes — RequireAuth redirects to /login if unauthenticated */}
+      <Route element={<RequireAuth />}>
+        <Route path="/" element={<HomePage />} />
+      </Route>
+
+      {/* Catch-all: redirect unknown paths to home (which will gate via RequireAuth) */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }
 

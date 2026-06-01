@@ -47,6 +47,8 @@ class Settings(BaseSettings):
     jwt_secret_key: str = "change-me-in-real-env"
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 60
+    seed_admin_email: str = "admin@example.com"
+    seed_admin_password: str = "admin1234"
 
     # --- LLM providers ---
     groq_api_key: str = ""

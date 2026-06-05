@@ -58,6 +58,11 @@ class Settings(BaseSettings):
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
     openrouter_model: str = "openai/gpt-4o-mini"
 
+    # Active LLM model name stored on diary entries. Defaults to the Groq model.
+    # Override via LLM_MODEL env var when switching providers.
+    llm_model: str = "llama-3.1-8b-instant"
+
+
 @lru_cache
 def get_settings() -> Settings:
     """Cached settings accessor — import this everywhere instead of instantiating Settings()."""

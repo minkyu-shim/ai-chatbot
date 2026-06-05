@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import admin as admin_router
 from app.api.routes import auth as auth_router
+from app.api.routes import entries as entries_router
 from app.config import get_settings
 from app.db.seed import run_seed
 
@@ -34,6 +35,7 @@ app.add_middleware(
 
 app.include_router(auth_router.router, prefix="/api")
 app.include_router(admin_router.router, prefix="/api")
+app.include_router(entries_router.router, prefix="/api")
 
 
 @app.get("/api/health", tags=["meta"])

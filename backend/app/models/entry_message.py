@@ -13,25 +13,23 @@ class MessageRole(str, enum.Enum):
     assistant = "assistant"
 
 
-class Message(Base):
-    __tablename__ = "messages"
+class EntryMessage(Base):
+    __tablename__ = "entry_messages"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    conversation_id: Mapped[int] = mapped_column(
-        ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False, index=True
+    entry_id: Mapped[int] = mapped_column(
+        ForeignKey("entries.id", ondelete="CASCADE"), nullable=False, index=True
     )
     role: Mapped[MessageRole] = mapped_column(
-        Enum(MessageRole, name="messagerole", native_enum=False),
-        nullable=False,
+        Enum(MessageRole, name="messagerole", native_enum=False), nullable=False
     )
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    metadata_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
+        DateTime(timezone=True), nullable=False, server_default=func.now()
     )
 
-    conversation: Mapped["Conversation"] = relationship("Conversation", back_populates="messages")
+    entry: Mapped["Entry"] = relationship("Entry", back_populates="messages")
 
     def __repr__(self) -> str:
-        return f"<Message id={self.id} role={self.role} conversation_id={self.conversation_id}>"
+        return f"<EntryMessage id={self.id} role={self.role} entry_id={self.entry_id}>"

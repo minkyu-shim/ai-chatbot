@@ -6,5 +6,5 @@ autogenerate. Add every new model module here.
 from app.db.base import Base  # noqa: F401
 
 from app.models import user          # noqa: F401
-from app.models import conversation  # noqa: F401
-from app.models import message       # noqa: F401
+from app.models import entry         # noqa: F401
+from app.models import entry_message  # noqa: F401

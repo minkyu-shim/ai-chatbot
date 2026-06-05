@@ -51,6 +51,8 @@ class Settings(BaseSettings):
     seed_admin_password: str = "admin1234"
 
     # --- LLM providers ---
+    llm_provider: str = "groq"
+
     groq_api_key: str = ""
     groq_model: str = "llama-3.1-8b-instant"
 
@@ -61,6 +63,15 @@ class Settings(BaseSettings):
     # Active LLM model name stored on diary entries. Defaults to the Groq model.
     # Override via LLM_MODEL env var when switching providers.
     llm_model: str = "llama-3.1-8b-instant"
+
+    # --- External APIs (M5) ---
+    # OpenWeatherMap — required for diary entry creation.
+    openweather_api_key: str = ""
+    openweather_base_url: str = "https://api.openweathermap.org/data/2.5"
+
+    # Unsplash — optional; fetch_outfit_photo() degrades silently when missing.
+    unsplash_access_key: str = ""
+    unsplash_base_url: str = "https://api.unsplash.com"
 
 
 @lru_cache

@@ -1,5 +1,4 @@
 from datetime import date as _date
-from typing import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
@@ -76,3 +75,46 @@ def delete_entry(db: Session, entry: Entry) -> None:
     """Delete an entry and its messages (cascade handles messages)."""
     db.delete(entry)
     db.commit()
+
+
+def build_history_summary(
+    db: Session, user: User, *, exclude_entry_id: int | None, limit: int = 5
+) -> str:
+    stmt = (
+        select(Entry)
+        .where(Entry.user_id == user.id)
+        .order_by(Entry.entry_date.desc(), Entry.created_at.desc())
+        .limit(limit + (1 if exclude_entry_id is not None else 0))
+    )
+    rows = db.scalars(stmt).all()
+    if exclude_entry_id is not None:
+        rows = [r for r in rows if r.id != exclude_entry_id]
+    rows = rows[:limit]
+    if not rows:
+        return "(no previous diary entries)"
+    lines: list[str] = []
+    for e in rows:
+        weather = _safe_parse_weather(e.weather_json)
+        temp = weather.get("temp")
+        condition = weather.get("condition")
+        worn = e.outfit_worn or "not recorded"
+        if temp is not None and condition:
+            lines.append(
+                f"{e.entry_date.isoformat()} · {e.city} · {temp}°C {condition} · "
+                f"mood: {e.mood} · wore: {worn}"
+            )
+        else:
+            lines.append(
+                f"{e.entry_date.isoformat()} · {e.city} · mood: {e.mood} · wore: {worn}"
+            )
+    return "\n".join(lines)
+
+
+def _safe_parse_weather(weather_json: str | None) -> dict:
+    import json as _json
+    if not weather_json:
+        return {}
+    try:
+        return _json.loads(weather_json) or {}
+    except _json.JSONDecodeError:
+        return {}

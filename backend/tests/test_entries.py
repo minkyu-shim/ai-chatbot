@@ -17,6 +17,22 @@ from tests.conftest import _TestingSessionLocal
 
 
 # ---------------------------------------------------------------------------
+# Autouse fixture: stub out external services so M3 tests stay isolated
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(autouse=True)
+def _fake_weather(monkeypatch):
+    async def fake_weather(city):
+        return {"city": city, "temp": 10.0, "condition": "Clear",
+                "description": "clear sky", "humidity": 50,
+                "wind_speed": 2.0, "raw": {}}
+    async def fake_photo(condition, mood):
+        return None
+    monkeypatch.setattr("app.api.routes.entries.fetch_weather", fake_weather)
+    monkeypatch.setattr("app.api.routes.entries.fetch_outfit_photo", fake_photo)
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
@@ -96,7 +112,7 @@ def test_t1_create_entry_without_token(client: TestClient):
 
 
 # ---------------------------------------------------------------------------
-# T2 — POST with city+mood → 201, entry_date==today, weather==None, messages==[]
+# T2 — POST with city+mood → 201, entry_date==today, weather populated by fake, messages==[]
 # ---------------------------------------------------------------------------
 
 def test_t2_create_entry_minimal(client: TestClient):
@@ -117,7 +133,10 @@ def test_t2_create_entry_minimal(client: TestClient):
     assert data["city"] == "Paris"
     assert data["mood"] == "tired"
     assert data["entry_date"] == str(date.today())
-    assert data["weather"] is None
+    assert data["weather"] == {"city": "Paris", "temp": 10.0, "condition": "Clear",
+                               "description": "clear sky", "humidity": 50,
+                               "wind_speed": 2.0, "raw": {}}
+    assert data["photo_url"] is None
     assert data["messages"] == []
 
 

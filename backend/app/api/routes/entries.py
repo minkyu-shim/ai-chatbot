@@ -1,5 +1,7 @@
 """CRUD endpoints for diary entries."""
-from fastapi import APIRouter, Depends, Query, Response, status
+import json
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -9,23 +11,32 @@ from app.models.entry import Entry
 from app.models.user import User
 from app.schemas.entry import EntryCreate, EntryOut, EntrySummary, EntryUpdate
 from app.services import entry_service
+from app.services.external.weather import fetch_weather, WeatherServiceError
+from app.services.external.unsplash import fetch_outfit_photo
+from app.services.suggestion_service import run_suggestion_stream
 
 router = APIRouter(prefix="/entries", tags=["entries"])
 
 
 @router.post("", response_model=EntryOut, status_code=status.HTTP_201_CREATED)
-def create_entry(
+async def create_entry(
     body: EntryCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> EntryOut:
-    """Create a new diary entry for the authenticated user."""
+    """Create a new diary entry, fetching live weather and an optional outfit photo."""
+    try:
+        weather = await fetch_weather(body.city)
+    except WeatherServiceError as e:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
+    photo_url = await fetch_outfit_photo(condition=weather.get("condition"), mood=body.mood)
     entry = entry_service.create_entry(db, current_user, body)
-    # Reload with messages relationship populated (empty list on fresh entry).
+    entry.weather_json = json.dumps(weather)
+    entry.photo_url = photo_url
+    db.commit()
+    db.refresh(entry)
     entry = db.scalar(
-        select(Entry)
-        .where(Entry.id == entry.id)
-        .options(selectinload(Entry.messages))
+        select(Entry).where(Entry.id == entry.id).options(selectinload(Entry.messages))
     )
     return EntryOut.model_validate(entry)
 
@@ -92,3 +103,22 @@ def delete_entry(
     entry = entry_service.get_owned_entry_or_404(db, current_user, entry_id)
     entry_service.delete_entry(db, entry)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/{entry_id}/suggest/stream", status_code=status.HTTP_200_OK)
+async def suggest_stream(
+    entry_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> StreamingResponse:
+    """Stream an LLM outfit suggestion for the given entry via SSE."""
+    entry_service.get_owned_entry_or_404(db, current_user, entry_id)
+    return StreamingResponse(
+        run_suggestion_stream(entry_id, current_user.id),
+        media_type="text/event-stream; charset=utf-8",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )

@@ -45,7 +45,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const stored = localStorage.getItem(TOKEN_KEY);
     if (!stored) {
-      setState({ user: null, token: null, loading: false });
+      // Use a resolved promise to defer setState out of the synchronous effect body
+      Promise.resolve().then(() => {
+        setState({ user: null, token: null, loading: false });
+      });
       return;
     }
 
@@ -95,7 +98,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 /**
  * Access the auth context. Must be used inside <AuthProvider>.
+ * eslint-disable-next-line react-refresh/only-export-components — intentional: context + hook co-located
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth(): AuthCtx {
   const ctx = useContext(AuthContext);
   if (!ctx) {

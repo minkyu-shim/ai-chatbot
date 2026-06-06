@@ -1,8 +1,10 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import RequireAuth from './auth/RequireAuth'
-import LoginPage from './pages/LoginPage'
-import SignupPage from './pages/SignupPage'
-import HomePage from './pages/HomePage'
+import { Routes, Route, Navigate } from 'react-router-dom';
+import RequireAuth from './auth/RequireAuth';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
+import DiaryPage from './pages/DiaryPage';
+import NewEntryPage from './pages/NewEntryPage';
+import EntryDetailPage from './pages/EntryDetailPage';
 
 function App() {
   return (
@@ -13,13 +15,16 @@ function App() {
 
       {/* Protected routes — RequireAuth redirects to /login if unauthenticated */}
       <Route element={<RequireAuth />}>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<Navigate to="/diary" replace />} />
+        <Route path="/diary" element={<DiaryPage />} />
+        <Route path="/diary/new" element={<NewEntryPage />} />
+        <Route path="/diary/:id" element={<EntryDetailPage />} />
       </Route>
 
-      {/* Catch-all: redirect unknown paths to home (which will gate via RequireAuth) */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Catch-all: redirect unknown paths to diary */}
+      <Route path="*" element={<Navigate to="/diary" replace />} />
     </Routes>
-  )
+  );
 }
 
-export default App
+export default App;

@@ -5,6 +5,7 @@ import SignupPage from './pages/SignupPage';
 import DiaryPage from './pages/DiaryPage';
 import NewEntryPage from './pages/NewEntryPage';
 import EntryDetailPage from './pages/EntryDetailPage';
+import AdminPage from './pages/AdminPage';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/diary" element={<DiaryPage />} />
         <Route path="/diary/new" element={<NewEntryPage />} />
         <Route path="/diary/:id" element={<EntryDetailPage />} />
+        <Route path="/admin" element={<AdminPage />} />
       </Route>
 
       {/* Catch-all: redirect unknown paths to diary */}

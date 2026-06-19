@@ -1,0 +1,4 @@
+provider,run_idx,model,ttft_ms,total_ms,output_chars,output_tokens_approx,output_excerpt
+groq,0,llama-3.1-8b-instant,241.2,657.1,356,62,"You should wear a soft pastel blue sweater, paired with relaxed-fitting dark grey trousers and sturdy black boots, allowing you to move comf"
+groq,1,llama-3.1-8b-instant,161.4,336.0,393,62,"Consider wearing a soft, moss-green oversized sweater paired with a dark grey leggings outfit. This combination provides a cozy and comforti"
+groq,2,llama-3.1-8b-instant,78.5,320.8,483,82,"On a damp and gloomy Parisian day, consider wearing a comfortable, monochromatic outfit in soothing shades such as olive green and beige, co"

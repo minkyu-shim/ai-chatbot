@@ -20,8 +20,11 @@ export default function NavBar() {
         Weathering With You
       </Link>
 
-      {/* Right side: email + logout */}
+      {/* Right side: admin link (if applicable), email + logout */}
       <div style={styles.right}>
+        {user?.role === "admin" && (
+          <Link to="/admin" style={styles.adminLink}>Admin</Link>
+        )}
         {user && (
           <span style={styles.email}>{user.email}</span>
         )}
@@ -56,6 +59,12 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     gap: "12px",
+  },
+  adminLink: {
+    fontSize: "13px",
+    fontWeight: 500,
+    color: "var(--accent)",
+    textDecoration: "none",
   },
   email: {
     fontSize: "13px",

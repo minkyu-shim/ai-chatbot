@@ -19,7 +19,8 @@ export default function DiaryPage() {
         setEntries(data);
       })
       .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : "Failed to load entries");
+        const msg = err instanceof Error ? err.message : "Failed to load entries";
+        setError(msg.includes("Failed to fetch") ? "Could not connect to server. Is the backend running?" : msg);
       })
       .finally(() => {
         setLoading(false);

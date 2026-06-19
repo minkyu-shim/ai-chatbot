@@ -70,3 +70,15 @@ export type EntryUpdate = {
   outfit_worn?: string | null;
   reflection?: string | null;
 };
+
+// ── Admin types ───────────────────────────────────────────────────────────────
+
+export type AdminEntrySummary = {
+  id: number;
+  user_email: string;
+  entry_date: string;
+  city: string;
+  mood: string;
+  weather: WeatherSnapshot | null;
+  created_at: string;
+};

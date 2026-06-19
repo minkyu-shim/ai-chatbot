@@ -97,3 +97,30 @@ class EntrySummary(_WeatherMixin):
     ai_preview: str | None = None
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+
+class AdminEntrySummary(BaseModel):
+    id: int
+    user_email: str
+    entry_date: date
+    city: str
+    mood: str
+    weather: dict[str, Any] | None = Field(default=None, validation_alias="weather_json")
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    @field_validator("weather", mode="before")
+    @classmethod
+    def _parse_weather(cls, v: Any) -> dict[str, Any] | None:
+        # reuse the same parse logic as _WeatherMixin
+        if v is None or v == "":
+            return None
+        if isinstance(v, dict):
+            return v
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                return None
+        return None

@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import NavBar from "../components/NavBar";
 import WeatherCard from "../components/WeatherCard";
 import SuggestionPanel from "../components/SuggestionPanel";
 import ReflectionEditor from "../components/ReflectionEditor";
-import { getEntry } from "../api/entries";
+import { getEntry, deleteEntry } from "../api/entries";
 import { ApiError } from "../api/client";
 import { useSuggestionStream } from "../hooks/useSuggestionStream";
 import { useAuth } from "../auth/AuthContext";
@@ -21,9 +21,12 @@ export default function EntryDetailPage() {
   const entryId = idParam ? parseInt(idParam, 10) : NaN;
 
   const { token } = useAuth();
+  const navigate = useNavigate();
   const [entry, setEntry] = useState<Entry | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const stream = useSuggestionStream(token);
 
@@ -43,7 +46,8 @@ export default function EntryDetailPage() {
         if (err instanceof ApiError && err.status === 404) {
           setNotFound(true);
         } else {
-          setLoadError(err instanceof Error ? err.message : "Failed to load entry");
+          const msg = err instanceof Error ? err.message : "Failed to load entry";
+          setLoadError(msg.includes("Failed to fetch") ? "Could not connect to server. Is the backend running?" : msg);
         }
       });
   }, [entryId]);
@@ -62,6 +66,25 @@ export default function EntryDetailPage() {
 
   // When a persisted assistant message already exists, extract its content
   const persistedAssistantContent = entry?.messages.find((m) => m.role === "assistant")?.content ?? null;
+
+  // ── Delete handler ───────────────────────────────────────────────────────────
+
+  async function handleDelete() {
+    if (!entry) return;
+    const confirmed = window.confirm("Delete this entry? This cannot be undone.");
+    if (!confirmed) return;
+
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteEntry(entry.id);
+      navigate("/diary", { replace: true });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to delete entry";
+      setDeleteError(msg.includes("Failed to fetch") ? "Could not connect to server. Is the backend running?" : msg);
+      setDeleting(false);
+    }
+  }
 
   // ── Error / not found states ─────────────────────────────────────────────────
 
@@ -140,6 +163,21 @@ export default function EntryDetailPage() {
           entry={entry}
           onSaved={(updated) => setEntry(updated)}
         />
+
+        {/* Delete entry — danger zone at the bottom */}
+        <div style={styles.deleteZone}>
+          {deleteError && (
+            <p style={styles.deleteError} role="alert">{deleteError}</p>
+          )}
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            style={styles.deleteBtn}
+          >
+            {deleting ? "Deleting…" : "Delete entry"}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -227,5 +265,28 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: "8px",
     color: "#dc2626",
     fontSize: "14px",
+  },
+  deleteZone: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: "8px",
+    paddingTop: "8px",
+    borderTop: "1px solid var(--border)",
+  },
+  deleteBtn: {
+    background: "none",
+    border: "none",
+    padding: "4px 0",
+    fontSize: "13px",
+    fontWeight: 400,
+    color: "#c0392b",
+    cursor: "pointer",
+    opacity: 1,
+  },
+  deleteError: {
+    margin: 0,
+    fontSize: "13px",
+    color: "#c0392b",
   },
 };

@@ -53,6 +53,15 @@ export async function apiFetch<T>(
   });
 
   if (!response.ok) {
+    // Auto-logout on 401: token is expired or invalid.
+    // Cannot use useAuth() here (hooks are React-only), so we clear
+    // localStorage directly and redirect — AuthProvider will re-read on next load.
+    if (response.status === 401) {
+      localStorage.removeItem(TOKEN_KEY);
+      window.location.href = "/login";
+      throw new ApiError(401, "Session expired");
+    }
+
     // Try to extract a human-readable message from the backend error body
     let detail: string = `HTTP ${response.status}`;
     try {

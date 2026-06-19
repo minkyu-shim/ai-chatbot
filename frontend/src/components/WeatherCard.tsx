@@ -82,6 +82,8 @@ const styles: Record<string, React.CSSProperties> = {
     border: "1px solid var(--accent-border)",
     borderRadius: "12px",
     flexWrap: "wrap",
+    maxWidth: "100%",
+    boxSizing: "border-box",
   },
   unavailable: {
     margin: 0,

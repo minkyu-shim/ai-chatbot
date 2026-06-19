@@ -77,6 +77,8 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: "var(--shadow)",
     transition: "border-color 0.15s",
     cursor: "pointer",
+    maxWidth: "100%",
+    boxSizing: "border-box",
   },
   body: {
     flex: 1,
@@ -103,11 +105,13 @@ const styles: Record<string, React.CSSProperties> = {
   city: {
     fontSize: "14px",
     color: "var(--text)",
+    overflowWrap: "anywhere",
   },
   mood: {
     fontSize: "14px",
     color: "var(--accent)",
     fontWeight: 500,
+    overflowWrap: "anywhere",
   },
   weatherChip: {
     display: "inline-block",

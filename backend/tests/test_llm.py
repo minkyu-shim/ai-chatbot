@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 
 from app.llm.base import LLMProvider, MessageDict
 from app.llm.factory import get_provider, reset_provider
+from app.llm.gemini_provider import GeminiProvider, _split_messages
 from app.llm.groq_provider import GroqProvider
 from app.llm.openrouter_provider import OpenRouterProvider
 
@@ -125,6 +126,71 @@ def test_openrouter_raises_on_empty_api_key():
 
 
 # ---------------------------------------------------------------------------
+# GeminiProvider tests
+# ---------------------------------------------------------------------------
+
+def _make_gemini_chunk(text):
+    """Build a minimal mock Gemini stream chunk (has a `.text` attribute)."""
+    chunk = MagicMock()
+    chunk.text = text
+    return chunk
+
+
+def _make_gemini_async_stream(chunks):
+    """Mock `client.aio.models.generate_content_stream`.
+
+    The real call is awaited and returns an async iterator, so the mock is an
+    async function returning an async generator over the chunks.
+    """
+    async def _coro(*args, **kwargs):
+        return _aiter(chunks)
+    return _coro
+
+
+@pytest.mark.asyncio
+async def test_gemini_streams_non_empty_text():
+    """GeminiProvider yields only chunks where text is truthy."""
+    chunks = [
+        _make_gemini_chunk("Wear"),
+        _make_gemini_chunk(None),   # skipped
+        _make_gemini_chunk(" a "),
+        _make_gemini_chunk(""),     # skipped
+        _make_gemini_chunk("coat"),
+    ]
+
+    with patch("app.llm.gemini_provider.genai") as mock_genai:
+        mock_client = MagicMock()
+        mock_genai.Client.return_value = mock_client
+        mock_client.aio.models.generate_content_stream = _make_gemini_async_stream(chunks)
+
+        provider = GeminiProvider(api_key="test-key", model="gemini-2.0-flash")
+        result = []
+        async for token in provider.stream_chat([{"role": "user", "content": "cold"}]):
+            result.append(token)
+
+    assert result == ["Wear", " a ", "coat"]
+
+
+def test_gemini_raises_on_empty_api_key():
+    """GeminiProvider raises ValueError when api_key is empty."""
+    with pytest.raises(ValueError, match="GOOGLE_API_KEY"):
+        GeminiProvider(api_key="", model="gemini-2.0-flash")
+
+
+def test_gemini_split_messages_translates_roles():
+    """System messages become the instruction; assistant maps to 'model'."""
+    system, contents = _split_messages([
+        {"role": "system", "content": "You are a stylist."},
+        {"role": "user", "content": "cold in Paris"},
+        {"role": "assistant", "content": "Wear a coat."},
+        {"role": "user", "content": "and shoes?"},
+    ])
+    assert system == "You are a stylist."
+    assert [c.role for c in contents] == ["user", "model", "user"]
+    assert contents[0].parts[0].text == "cold in Paris"
+
+
+# ---------------------------------------------------------------------------
 # Factory tests
 # ---------------------------------------------------------------------------
 
@@ -134,6 +200,8 @@ def _mock_settings(provider: str, **kwargs):
     s.llm_provider = provider
     s.groq_api_key = kwargs.get("groq_api_key", "fake-groq-key")
     s.groq_model = kwargs.get("groq_model", "llama-3.1-8b-instant")
+    s.google_api_key = kwargs.get("google_api_key", "fake-gemini-key")
+    s.gemini_model = kwargs.get("gemini_model", "gemini-2.0-flash")
     s.openrouter_api_key = kwargs.get("openrouter_api_key", "fake-or-key")
     s.openrouter_model = kwargs.get("openrouter_model", "openai/gpt-4o-mini")
     s.openrouter_base_url = kwargs.get("openrouter_base_url", "https://openrouter.ai/api/v1")
@@ -154,6 +222,14 @@ def test_get_provider_returns_openrouter_instance():
         with patch("app.llm.openrouter_provider.AsyncOpenAI"):
             provider = get_provider()
     assert isinstance(provider, OpenRouterProvider)
+
+
+def test_get_provider_returns_gemini_instance():
+    """get_provider() with llm_provider='gemini' returns a GeminiProvider."""
+    with patch("app.llm.factory.get_settings", return_value=_mock_settings("gemini")):
+        with patch("app.llm.gemini_provider.genai"):
+            provider = get_provider()
+    assert isinstance(provider, GeminiProvider)
 
 
 def test_get_provider_raises_on_unknown_provider():

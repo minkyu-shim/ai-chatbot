@@ -15,6 +15,9 @@ def get_provider() -> LLMProvider:
     if provider_name == "groq":
         from app.llm.groq_provider import GroqProvider
         _provider = GroqProvider(api_key=settings.groq_api_key, model=settings.groq_model)
+    elif provider_name == "gemini":
+        from app.llm.gemini_provider import GeminiProvider
+        _provider = GeminiProvider(api_key=settings.google_api_key, model=settings.gemini_model)
     elif provider_name == "openrouter":
         from app.llm.openrouter_provider import OpenRouterProvider
         _provider = OpenRouterProvider(
@@ -24,7 +27,8 @@ def get_provider() -> LLMProvider:
         )
     else:
         raise ValueError(
-            f"Unknown LLM_PROVIDER: {provider_name!r}. Valid values: 'groq', 'openrouter'."
+            f"Unknown LLM_PROVIDER: {provider_name!r}. "
+            "Valid values: 'groq', 'gemini', 'openrouter'."
         )
 
     return _provider

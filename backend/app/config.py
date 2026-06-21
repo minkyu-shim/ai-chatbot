@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     )
 
     # --- App ---
-    app_name: str = "local-llm-chat"
+    app_name: str = "weathering-with-you"
     environment: str = "development"
     log_level: str = "INFO"
 
@@ -51,10 +51,14 @@ class Settings(BaseSettings):
     seed_admin_password: str = "admin1234"
 
     # --- LLM providers ---
-    llm_provider: str = "groq"
+    llm_provider: str = "groq"  # "groq" | "gemini" | "openrouter"
 
     groq_api_key: str = ""
     groq_model: str = "llama-3.1-8b-instant"
+
+    # Google AI Studio (Gemini). Server-side key from https://aistudio.google.com/apikey.
+    google_api_key: str = ""
+    gemini_model: str = "gemini-2.0-flash"
 
     openrouter_api_key: str = ""
     openrouter_base_url: str = "https://openrouter.ai/api/v1"

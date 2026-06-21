@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { motion } from "framer-motion";
+import { ChevronLeft, RefreshCw } from "lucide-react";
 import NavBar from "../components/NavBar";
 import WeatherCard from "../components/WeatherCard";
 import SuggestionPanel from "../components/SuggestionPanel";
@@ -36,7 +38,6 @@ export default function EntryDetailPage() {
   // Load entry on mount
   useEffect(() => {
     if (isNaN(entryId)) {
-      // Defer setState out of synchronous effect body
       Promise.resolve().then(() => setNotFound(true));
       return;
     }
@@ -47,13 +48,16 @@ export default function EntryDetailPage() {
           setNotFound(true);
         } else {
           const msg = err instanceof Error ? err.message : "Failed to load entry";
-          setLoadError(msg.includes("Failed to fetch") ? "Could not connect to server. Is the backend running?" : msg);
+          setLoadError(
+            msg.includes("Failed to fetch")
+              ? "Could not connect to server. Is the backend running?"
+              : msg
+          );
         }
       });
   }, [entryId]);
 
-  // Auto-start stream if entry has no assistant message yet.
-  // stream.start is memoised with useCallback so it's safe to include in deps.
+  // Auto-start stream if entry has no assistant message yet
   useEffect(() => {
     if (!entry) return;
     if (didStartRef.current) return;
@@ -64,10 +68,10 @@ export default function EntryDetailPage() {
     }
   }, [entry, stream]);
 
-  // When a persisted assistant message already exists, extract its content
-  const persistedAssistantContent = entry?.messages.find((m) => m.role === "assistant")?.content ?? null;
+  const persistedAssistantContent =
+    entry?.messages.find((m) => m.role === "assistant")?.content ?? null;
 
-  // ── Delete handler ───────────────────────────────────────────────────────────
+  // ── Delete handler ────────────────────────────────────────────────────────
 
   async function handleDelete() {
     if (!entry) return;
@@ -81,20 +85,33 @@ export default function EntryDetailPage() {
       navigate("/diary", { replace: true });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to delete entry";
-      setDeleteError(msg.includes("Failed to fetch") ? "Could not connect to server. Is the backend running?" : msg);
+      setDeleteError(
+        msg.includes("Failed to fetch")
+          ? "Could not connect to server. Is the backend running?"
+          : msg
+      );
       setDeleting(false);
     }
   }
 
-  // ── Error / not found states ─────────────────────────────────────────────────
+  // ── Re-generate handler ───────────────────────────────────────────────────
+
+  function handleRegenerate() {
+    if (!entry) return;
+    stream.start(entry.id);
+  }
+
+  // ── Error / not-found / loading states ───────────────────────────────────
 
   if (notFound) {
     return (
-      <div style={styles.page}>
+      <div className="flex flex-col min-h-svh bg-surface">
         <NavBar />
-        <div style={styles.centeredMsg}>
-          <p style={styles.notFoundText}>Entry not found.</p>
-          <Link to="/diary" style={styles.backLink}>Back to diary</Link>
+        <div className="flex flex-col items-center gap-4 py-20 px-6">
+          <p className="text-base text-text-muted">Entry not found.</p>
+          <Link to="/diary" className="text-sm font-medium text-primary no-underline hover:underline">
+            Back to diary
+          </Link>
         </div>
       </div>
     );
@@ -102,18 +119,23 @@ export default function EntryDetailPage() {
 
   if (loadError) {
     return (
-      <div style={styles.page}>
+      <div className="flex flex-col min-h-svh bg-surface">
         <NavBar />
-        <div style={styles.errorBox} role="alert">{loadError}</div>
+        <div
+          role="alert"
+          className="mx-6 mt-6 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg"
+        >
+          {loadError}
+        </div>
       </div>
     );
   }
 
   if (!entry) {
     return (
-      <div style={styles.page}>
+      <div className="flex flex-col min-h-svh bg-surface">
         <NavBar />
-        <p style={styles.loading}>Loading entry…</p>
+        <p className="text-center py-12 text-sm text-text-muted">Loading entry…</p>
       </div>
     );
   }
@@ -125,168 +147,111 @@ export default function EntryDetailPage() {
     day: "numeric",
   });
 
-  // Determine which weather/photo to show:
   // During/after streaming → use stream data; otherwise use persisted entry data
   const weatherToShow = stream.state !== "idle" ? (stream.weather ?? entry.weather) : entry.weather;
-  const photoToShow = stream.state !== "idle" ? (stream.photoUrl ?? entry.photo_url) : entry.photo_url;
+  const photoToShow   = stream.state !== "idle" ? (stream.photoUrl ?? entry.photo_url) : entry.photo_url;
+
+  // Show re-generate button only when stream is idle/done/error
+  const canRegenerate = stream.state === "done" || stream.state === "error" || stream.state === "idle";
 
   return (
-    <div style={styles.page}>
+    <div className="flex flex-col min-h-svh bg-surface">
       <NavBar />
 
-      {/* ── Entry header ─────────────────────────────────────────────────────── */}
-      <div style={styles.header}>
-        <Link to="/diary" style={styles.backLink}>&larr; Back to diary</Link>
-        <h1 style={styles.title}>{displayDate}</h1>
-        <div style={styles.metaRow}>
-          <span style={styles.metaItem}>{entry.city}</span>
-          <span style={styles.metaSep}>·</span>
-          <span style={styles.moodBadge}>{entry.mood}</span>
-        </div>
-      </div>
+      <div className="max-w-3xl mx-auto w-full px-6 py-6 flex flex-col gap-5">
+        {/* Back link */}
+        <Link
+          to="/diary"
+          className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-primary transition-colors no-underline w-fit"
+        >
+          <ChevronLeft size={15} />
+          Back
+        </Link>
 
-      {/* ── Content layout ───────────────────────────────────────────────────── */}
-      <div style={styles.content}>
-        {/* Weather card (shows streaming data or persisted data) */}
-        <WeatherCard weather={weatherToShow} photoUrl={photoToShow} />
+        {/* Entry header */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="flex flex-col gap-2"
+        >
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+            {displayDate}
+          </h1>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-medium text-primary">📍 {entry.city}</span>
+            <span className="inline-flex items-center px-2.5 py-0.5 text-xs font-semibold rounded-full bg-accent-light text-accent border border-accent/30">
+              {entry.mood}
+            </span>
+          </div>
+        </motion.div>
 
-        {/* AI suggestion panel */}
-        <SuggestionPanel
-          state={stream.state}
-          text={stream.text}
-          error={stream.error}
-          persistedAssistantContent={persistedAssistantContent}
-        />
+        {/* Weather card */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.07 }}
+        >
+          <WeatherCard weather={weatherToShow} photoUrl={photoToShow} />
+        </motion.div>
 
-        {/* Reflection editor — save updates local entry state */}
-        <ReflectionEditor
-          entry={entry}
-          onSaved={(updated) => setEntry(updated)}
-        />
+        {/* Suggestion panel with optional re-generate */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.14 }}
+          className="relative"
+        >
+          {/* Re-generate button next to heading — positioned via absolute */}
+          {canRegenerate && (persistedAssistantContent || stream.state === "done" || stream.state === "error") && (
+            <button
+              type="button"
+              onClick={handleRegenerate}
+              className="absolute top-5 right-5 flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg border border-border hover:border-primary hover:text-primary text-text-muted transition-colors cursor-pointer bg-white z-10"
+            >
+              <RefreshCw size={12} />
+              Re-generate
+            </button>
+          )}
+          <SuggestionPanel
+            state={stream.state}
+            text={stream.text}
+            error={stream.error}
+            persistedAssistantContent={persistedAssistantContent}
+          />
+        </motion.div>
 
-        {/* Delete entry — danger zone at the bottom */}
-        <div style={styles.deleteZone}>
+        {/* Reflection editor */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.21 }}
+        >
+          <ReflectionEditor entry={entry} onSaved={(updated) => setEntry(updated)} />
+        </motion.div>
+
+        {/* Delete zone */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.28 }}
+          className="flex flex-col items-start gap-2 pt-4 border-t border-border"
+        >
           {deleteError && (
-            <p style={styles.deleteError} role="alert">{deleteError}</p>
+            <p role="alert" className="text-sm text-red-600">
+              {deleteError}
+            </p>
           )}
           <button
             type="button"
             onClick={handleDelete}
             disabled={deleting}
-            style={styles.deleteBtn}
+            className="text-sm text-red-500 hover:bg-red-50 px-2 py-1 rounded-md transition-colors cursor-pointer disabled:opacity-60"
           >
             {deleting ? "Deleting…" : "Delete entry"}
           </button>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  page: {
-    display: "flex",
-    flexDirection: "column",
-    minHeight: "100svh",
-    textAlign: "left",
-  },
-  header: {
-    padding: "24px 24px 0",
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-  },
-  backLink: {
-    fontSize: "13px",
-    color: "var(--text)",
-    textDecoration: "none",
-    display: "inline-block",
-    marginBottom: "4px",
-  },
-  title: {
-    margin: 0,
-    fontSize: "22px",
-    fontWeight: 600,
-    letterSpacing: "-0.3px",
-    color: "var(--text-h)",
-  },
-  metaRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    marginBottom: "16px",
-  },
-  metaItem: {
-    fontSize: "14px",
-    color: "var(--text)",
-  },
-  metaSep: {
-    fontSize: "14px",
-    color: "var(--border)",
-  },
-  moodBadge: {
-    fontSize: "13px",
-    fontWeight: 500,
-    color: "var(--accent)",
-    background: "var(--accent-bg)",
-    border: "1px solid var(--accent-border)",
-    borderRadius: "20px",
-    padding: "2px 10px",
-  },
-  content: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-    padding: "0 24px 40px",
-  },
-  centeredMsg: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "12px",
-    padding: "80px 24px",
-  },
-  notFoundText: {
-    margin: 0,
-    fontSize: "16px",
-    color: "var(--text)",
-  },
-  loading: {
-    textAlign: "center",
-    padding: "48px 0",
-    color: "var(--text)",
-    fontSize: "15px",
-  },
-  errorBox: {
-    margin: "24px",
-    padding: "12px 16px",
-    background: "rgba(220, 38, 38, 0.1)",
-    border: "1px solid rgba(220, 38, 38, 0.4)",
-    borderRadius: "8px",
-    color: "#dc2626",
-    fontSize: "14px",
-  },
-  deleteZone: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-start",
-    gap: "8px",
-    paddingTop: "8px",
-    borderTop: "1px solid var(--border)",
-  },
-  deleteBtn: {
-    background: "none",
-    border: "none",
-    padding: "4px 0",
-    fontSize: "13px",
-    fontWeight: 400,
-    color: "#c0392b",
-    cursor: "pointer",
-    opacity: 1,
-  },
-  deleteError: {
-    margin: 0,
-    fontSize: "13px",
-    color: "#c0392b",
-  },
-};

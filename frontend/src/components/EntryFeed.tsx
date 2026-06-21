@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { CloudSun, PenLine } from "lucide-react";
 import type { EntrySummary } from "../types";
 import EntryCard from "./EntryCard";
 
@@ -8,29 +10,60 @@ type Props = {
   error: string | null;
 };
 
+/** Container animation: staggers child cards in */
+const listVariants = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.07,
+    },
+  },
+};
+
 /**
- * Renders the full list of diary entry cards, or appropriate loading/empty/error states.
+ * Renders the full list of diary entry cards, or skeleton/empty/error states.
  */
 export default function EntryFeed({ entries, loading, error }: Props) {
+  /* ── Skeleton loader ─────────────────────────────────────────────────────── */
   if (loading) {
-    return <p style={styles.status}>Loading entries…</p>;
+    return (
+      <div className="flex flex-col gap-3">
+        {[0, 1, 2].map((i) => (
+          <SkeletonCard key={i} />
+        ))}
+      </div>
+    );
   }
 
+  /* ── Error state ─────────────────────────────────────────────────────────── */
   if (error) {
     return (
-      <div style={styles.errorBox} role="alert">
+      <div
+        role="alert"
+        className="px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg"
+      >
         {error}
       </div>
     );
   }
 
+  /* ── Empty state ─────────────────────────────────────────────────────────── */
   if (entries.length === 0) {
     return (
-      <div style={styles.emptyWrap}>
-        <div style={styles.emptyCard}>
-          <p style={styles.emptyTitle}>No entries yet</p>
-          <p style={styles.emptyHint}>Start tracking your daily outfit by adding your first entry.</p>
-          <Link to="/diary/new" style={styles.emptyLink}>
+      <div className="flex justify-center py-16">
+        <div className="flex flex-col items-center gap-4 text-center max-w-xs">
+          <CloudSun size={64} className="text-primary opacity-40" />
+          <div>
+            <p className="text-lg font-semibold text-gray-900">No entries yet</p>
+            <p className="text-sm text-text-muted mt-1 leading-relaxed">
+              Start tracking your daily outfit by adding your first entry.
+            </p>
+          </div>
+          <Link
+            to="/diary/new"
+            className="flex items-center gap-1.5 px-5 py-2.5 bg-accent hover:bg-accent/90 text-white text-sm font-medium rounded-lg no-underline transition-colors"
+          >
+            <PenLine size={14} />
             Add your first entry
           </Link>
         </div>
@@ -38,76 +71,34 @@ export default function EntryFeed({ entries, loading, error }: Props) {
     );
   }
 
+  /* ── Entry list ──────────────────────────────────────────────────────────── */
   return (
-    <div style={styles.feed}>
+    <motion.div
+      variants={listVariants}
+      initial="hidden"
+      animate="show"
+      className="flex flex-col gap-3"
+    >
       {entries.map((entry) => (
         <EntryCard key={entry.id} entry={entry} />
       ))}
-    </div>
+    </motion.div>
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  status: {
-    textAlign: "center",
-    padding: "48px 0",
-    color: "var(--text)",
-    fontSize: "15px",
-  },
-  errorBox: {
-    margin: "24px",
-    padding: "12px 16px",
-    background: "rgba(220, 38, 38, 0.1)",
-    border: "1px solid rgba(220, 38, 38, 0.4)",
-    borderRadius: "8px",
-    color: "#dc2626",
-    fontSize: "14px",
-  },
-  emptyWrap: {
-    display: "flex",
-    justifyContent: "center",
-    padding: "48px 24px",
-  },
-  emptyCard: {
-    maxWidth: "360px",
-    textAlign: "center",
-    padding: "40px 32px",
-    background: "var(--bg)",
-    border: "1px solid var(--border)",
-    borderRadius: "12px",
-    boxShadow: "var(--shadow)",
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-    alignItems: "center",
-  },
-  emptyTitle: {
-    margin: 0,
-    fontSize: "18px",
-    fontWeight: 600,
-    color: "var(--text-h)",
-  },
-  emptyHint: {
-    margin: 0,
-    fontSize: "14px",
-    color: "var(--text)",
-    lineHeight: "1.5",
-  },
-  emptyLink: {
-    marginTop: "8px",
-    display: "inline-block",
-    padding: "9px 20px",
-    background: "var(--accent)",
-    color: "#fff",
-    borderRadius: "6px",
-    textDecoration: "none",
-    fontSize: "14px",
-    fontWeight: 500,
-  },
-  feed: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-    padding: "0 24px 40px",
-  },
-};
+/** Shimmer skeleton card — mirrors EntryCard dimensions */
+function SkeletonCard() {
+  return (
+    <div className="flex items-start gap-4 p-5 bg-white rounded-2xl border border-border">
+      {/* Left: text lines */}
+      <div className="flex-1 flex flex-col gap-3">
+        <div className="h-3.5 w-1/3 rounded-full animate-shimmer" />
+        <div className="h-3 w-1/4 rounded-full animate-shimmer" />
+        <div className="h-3 w-3/4 rounded-full animate-shimmer" />
+        <div className="h-3 w-2/3 rounded-full animate-shimmer" />
+      </div>
+      {/* Right: thumbnail placeholder */}
+      <div className="w-[72px] h-24 rounded-xl flex-shrink-0 animate-shimmer" />
+    </div>
+  );
+}

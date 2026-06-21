@@ -30,17 +30,25 @@ export default function EntryForm({ onSubmit, submitting, error }: Props) {
     onSubmit({ city: city.trim(), mood: mood.trim(), outfit_worn: outfitWorn.trim() });
   }
 
+  /* Shared input classes */
+  const inputCls =
+    "px-3 py-2.5 text-sm rounded-lg border border-border focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition disabled:opacity-60 w-full";
+
   return (
-    <form onSubmit={handleSubmit} noValidate style={styles.form}>
+    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-0">
       {error && (
-        <div style={styles.errorBox} role="alert">
+        <div
+          role="alert"
+          className="mb-4 px-4 py-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg"
+        >
           {error}
         </div>
       )}
 
-      <div style={styles.field}>
-        <label htmlFor="city" style={styles.label}>
-          City <span style={styles.required}>*</span>
+      {/* City */}
+      <div className="flex flex-col gap-1.5 mb-4">
+        <label htmlFor="city" className="text-sm font-medium text-gray-800">
+          City <span className="text-red-500">*</span>
         </label>
         <input
           id="city"
@@ -50,13 +58,14 @@ export default function EntryForm({ onSubmit, submitting, error }: Props) {
           value={city}
           onChange={(e) => setCity(e.target.value)}
           disabled={submitting}
-          style={styles.input}
+          className={inputCls}
         />
       </div>
 
-      <div style={styles.field}>
-        <label htmlFor="mood" style={styles.label}>
-          Mood <span style={styles.required}>*</span>
+      {/* Mood */}
+      <div className="flex flex-col gap-1.5 mb-4">
+        <label htmlFor="mood" className="text-sm font-medium text-gray-800">
+          Mood <span className="text-red-500">*</span>
         </label>
         <input
           id="mood"
@@ -66,14 +75,16 @@ export default function EntryForm({ onSubmit, submitting, error }: Props) {
           value={mood}
           onChange={(e) => setMood(e.target.value)}
           disabled={submitting}
-          style={styles.input}
+          className={inputCls}
         />
-        <span style={styles.helper}>e.g. tired, energetic, anxious</span>
+        <span className="text-xs text-text-muted">e.g. tired, energetic, anxious</span>
       </div>
 
-      <div style={styles.field}>
-        <label htmlFor="outfit_worn" style={styles.label}>
-          What I plan to wear <span style={styles.optional}>(optional)</span>
+      {/* Outfit worn */}
+      <div className="flex flex-col gap-1.5 mb-5">
+        <label htmlFor="outfit_worn" className="text-sm font-medium text-gray-800">
+          What I plan to wear{" "}
+          <span className="font-normal text-text-muted text-xs">(optional)</span>
         </label>
         <textarea
           id="outfit_worn"
@@ -82,24 +93,23 @@ export default function EntryForm({ onSubmit, submitting, error }: Props) {
           value={outfitWorn}
           onChange={(e) => setOutfitWorn(e.target.value)}
           disabled={submitting}
-          style={styles.textarea}
+          className={`${inputCls} resize-y font-inherit leading-relaxed`}
         />
       </div>
 
-      <div style={styles.actions}>
+      {/* Actions */}
+      <div className="flex items-center gap-4">
         <button
           type="submit"
           disabled={!canSubmit}
-          style={{
-            ...styles.submitBtn,
-            opacity: canSubmit ? 1 : 0.5,
-            cursor: canSubmit ? "pointer" : "not-allowed",
-          }}
+          className="px-6 py-2.5 text-sm font-medium bg-accent hover:bg-accent/90 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
           {submitting ? "Creating entry…" : "Create entry"}
         </button>
-
-        <Link to="/diary" style={styles.cancelLink}>
+        <Link
+          to="/diary"
+          className="text-sm text-text-muted no-underline hover:text-gray-800 transition-colors"
+        >
           Cancel
         </Link>
       </div>
@@ -109,88 +119,3 @@ export default function EntryForm({ onSubmit, submitting, error }: Props) {
 
 // Re-export FormValues type for page use
 export type { FormValues as EntryFormValues };
-
-const styles: Record<string, React.CSSProperties> = {
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "4px",
-  },
-  errorBox: {
-    marginBottom: "12px",
-    padding: "10px 14px",
-    background: "rgba(220, 38, 38, 0.1)",
-    border: "1px solid rgba(220, 38, 38, 0.4)",
-    borderRadius: "6px",
-    color: "#dc2626",
-    fontSize: "14px",
-  },
-  field: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "6px",
-    marginBottom: "16px",
-  },
-  label: {
-    fontSize: "14px",
-    fontWeight: 500,
-    color: "var(--text-h)",
-  },
-  required: {
-    color: "#dc2626",
-  },
-  optional: {
-    fontWeight: 400,
-    color: "var(--text)",
-    fontSize: "13px",
-  },
-  helper: {
-    fontSize: "12px",
-    color: "var(--text)",
-  },
-  input: {
-    padding: "9px 12px",
-    fontSize: "15px",
-    border: "1px solid var(--border)",
-    borderRadius: "6px",
-    background: "var(--bg)",
-    color: "var(--text-h)",
-    outline: "none",
-    width: "100%",
-    boxSizing: "border-box",
-  },
-  textarea: {
-    padding: "9px 12px",
-    fontSize: "15px",
-    border: "1px solid var(--border)",
-    borderRadius: "6px",
-    background: "var(--bg)",
-    color: "var(--text-h)",
-    outline: "none",
-    width: "100%",
-    boxSizing: "border-box",
-    resize: "vertical",
-    fontFamily: "inherit",
-    lineHeight: "1.5",
-  },
-  actions: {
-    display: "flex",
-    alignItems: "center",
-    gap: "16px",
-    marginTop: "8px",
-  },
-  submitBtn: {
-    padding: "10px 24px",
-    fontSize: "15px",
-    fontWeight: 500,
-    background: "var(--accent)",
-    color: "#fff",
-    border: "none",
-    borderRadius: "6px",
-  },
-  cancelLink: {
-    fontSize: "14px",
-    color: "var(--text)",
-    textDecoration: "none",
-  },
-};

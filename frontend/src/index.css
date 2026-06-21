@@ -1,122 +1,142 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@import "tailwindcss";
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+/* ── Design tokens via Tailwind v4 @theme ───────────────────────────────────
+   These become Tailwind utilities: bg-primary, text-accent, border-border, etc.
+   ─────────────────────────────────────────────────────────────────────────── */
+@theme {
+  --color-primary: #3e7cb1;
+  --color-primary-light: #eaf2f8;
+  --color-accent: #f17300;
+  --color-accent-light: #fff3e6;
+  --color-surface: #f6f8fa;
+  --color-border: #dde1e7;
+  --color-text-muted: #5a6272;
+  --font-sans: 'Inter', system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
+/* ── Global base ────────────────────────────────────────────────────────────*/
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #fff;
+  color: #1a202c;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+#root {
+  min-height: 100svh;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+/* ── Custom keyframes ───────────────────────────────────────────────────────
+   Tailwind doesn't ship shimmer / pulse-dot / fadeInUp by default.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Skeleton shimmer: sweeps a bright gradient left-to-right */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+/* Thinking dots: each dot fades from fully opaque to 40% and back */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* Entrance animation for cards and page sections */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
-}
-
-/* Blinking cursor for streaming text */
+/* Blinking streaming cursor */
 @keyframes blink {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  50%       { opacity: 0; }
+}
+
+/* ── Utility classes for custom animations ──────────────────────────────────*/
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    #eaf2f8 25%,
+    #d4e7f4 50%,
+    #eaf2f8 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.35s ease both;
 }
 
 .streaming-cursor {
+  display: inline-block;
   animation: blink 0.9s step-end infinite;
-  color: var(--accent);
+  color: #f17300;
+}
+
+/* ── Markdown typography inside SuggestionPanel ─────────────────────────────*/
+.suggestion-markdown h1,
+.suggestion-markdown h2,
+.suggestion-markdown h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 1rem 0 0.25rem;
+}
+
+.suggestion-markdown h1 { font-size: 1.125rem; }
+.suggestion-markdown h2 { font-size: 1rem; }
+.suggestion-markdown h3 { font-size: 0.9375rem; }
+
+.suggestion-markdown p {
+  margin: 0.5rem 0;
+  line-height: 1.65;
+}
+
+.suggestion-markdown ul,
+.suggestion-markdown ol {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.suggestion-markdown li {
+  margin: 0.25rem 0;
+  line-height: 1.6;
+}
+
+.suggestion-markdown strong {
+  font-weight: 600;
+  color: #1a202c;
+}
+
+.suggestion-markdown blockquote {
+  border-left: 3px solid #3e7cb1;
+  padding-left: 0.75rem;
+  margin: 0.75rem 0;
+  color: #5a6272;
+  font-style: italic;
+}
+
+.suggestion-markdown code {
+  background: #eaf2f8;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.875em;
+  font-family: ui-monospace, Consolas, monospace;
 }

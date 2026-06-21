@@ -1,8 +1,13 @@
 import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Shirt } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 
 /**
- * Top navigation bar — brand name left, diary link centre-ish, user email + logout right.
+ * Top navigation bar.
+ * - Brand: "Weathering with You" with Shirt icon (left)
+ * - Right: admin link (if applicable), truncated email, pill sign-out button
+ * - Glassmorphism sticky header with Framer Motion mount animation
  */
 export default function NavBar() {
   const { user, logout } = useAuth();
@@ -14,70 +19,44 @@ export default function NavBar() {
   }
 
   return (
-    <nav style={styles.nav}>
+    <motion.nav
+      initial={{ y: -4, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className="sticky top-0 z-50 flex items-center justify-between px-6 h-14 bg-white/80 backdrop-blur-md border-b border-border"
+    >
       {/* Brand */}
-      <Link to="/diary" style={styles.brand}>
-        Weathering With You
+      <Link
+        to="/diary"
+        className="flex items-center gap-2 text-primary font-bold text-base tracking-tight no-underline"
+      >
+        <Shirt size={20} />
+        <span>Weathering with You</span>
       </Link>
 
-      {/* Right side: admin link (if applicable), email + logout */}
-      <div style={styles.right}>
+      {/* Right side */}
+      <div className="flex items-center gap-3">
         {user?.role === "admin" && (
-          <Link to="/admin" style={styles.adminLink}>Admin</Link>
+          <Link
+            to="/admin"
+            className="text-xs font-semibold text-primary no-underline hover:underline"
+          >
+            Admin
+          </Link>
         )}
         {user && (
-          <span style={styles.email}>{user.email}</span>
+          <span className="text-xs text-text-muted max-w-[180px] truncate hidden sm:inline">
+            {user.email}
+          </span>
         )}
-        <button onClick={handleLogout} style={styles.logoutBtn} type="button">
+        <button
+          onClick={handleLogout}
+          type="button"
+          className="text-xs font-medium px-3 py-1.5 rounded-full border border-border bg-white hover:bg-surface transition-colors cursor-pointer"
+        >
           Sign out
         </button>
       </div>
-    </nav>
+    </motion.nav>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  nav: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "0 24px",
-    height: "56px",
-    borderBottom: "1px solid var(--border)",
-    background: "var(--bg)",
-    boxSizing: "border-box",
-    flexShrink: 0,
-  },
-  brand: {
-    fontSize: "16px",
-    fontWeight: 600,
-    color: "var(--accent)",
-    textDecoration: "none",
-    letterSpacing: "-0.2px",
-  },
-  right: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-  },
-  adminLink: {
-    fontSize: "13px",
-    fontWeight: 500,
-    color: "var(--accent)",
-    textDecoration: "none",
-  },
-  email: {
-    fontSize: "13px",
-    color: "var(--text)",
-  },
-  logoutBtn: {
-    fontSize: "13px",
-    fontWeight: 500,
-    color: "var(--text-h)",
-    background: "none",
-    border: "1px solid var(--border)",
-    borderRadius: "6px",
-    padding: "5px 12px",
-    cursor: "pointer",
-  },
-};

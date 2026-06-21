@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import type { WeatherSnapshot } from "../types";
 
 type Props = {
@@ -5,159 +6,116 @@ type Props = {
   photoUrl: string | null;
 };
 
+/** Maps OpenWeatherMap condition names to display emojis */
+const conditionEmoji: Record<string, string> = {
+  Clear:         "☀️",
+  Clouds:        "☁️",
+  Rain:          "🌧️",
+  Snow:          "❄️",
+  Thunderstorm:  "⛈️",
+  Drizzle:       "🌦️",
+  Mist:          "🌫️",
+  Fog:           "🌫️",
+  Haze:          "🌫️",
+  Smoke:         "🌫️",
+  Dust:          "🌫️",
+  Sand:          "🌫️",
+  Ash:           "🌫️",
+  Squall:        "💨",
+  Tornado:       "🌪️",
+};
+
+function getEmoji(condition: string | null): string {
+  if (!condition) return "⛅";
+  return conditionEmoji[condition] ?? "⛅";
+}
+
 /**
- * Displays weather conditions + optional outfit photo side by side.
- * All weather fields are nullable — renders "?" when data is absent.
+ * Displays weather conditions + optional outfit photo.
+ * Gradient card with stat mini-chips and portrait photo.
  */
 export default function WeatherCard({ weather, photoUrl }: Props) {
   if (!weather) {
     return (
-      <div style={styles.card}>
-        <p style={styles.unavailable}>Weather unavailable</p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.97 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3 }}
+        className="p-5 bg-gradient-to-br from-primary-light to-white border border-primary/20 rounded-2xl"
+      >
+        <p className="text-sm text-text-muted">Weather unavailable</p>
+      </motion.div>
     );
   }
 
-  const temp = weather.temp !== null ? `${Math.round(weather.temp)}°C` : "?°C";
-  const feelsLike = weather.feels_like !== null ? `${Math.round(weather.feels_like)}°C` : "?°C";
-  const humidity = weather.humidity !== null ? `${weather.humidity}%` : "?%";
-  const wind = weather.wind_speed !== null ? `${weather.wind_speed} m/s` : "?";
-  const condition = weather.condition ?? "?";
+  const temp       = weather.temp       !== null ? `${Math.round(weather.temp)}°C`      : "?°C";
+  const feelsLike  = weather.feels_like !== null ? `${Math.round(weather.feels_like)}°C` : "?°C";
+  const humidity   = weather.humidity   !== null ? `${weather.humidity}%`                : "?%";
+  const wind       = weather.wind_speed !== null ? `${weather.wind_speed} m/s`           : "?";
+  const condition  = weather.condition  ?? "?";
   const description = weather.description ?? "";
+  const emoji      = getEmoji(weather.condition);
 
   return (
-    <div style={styles.card}>
-      {/* Weather info */}
-      <div style={styles.weatherInfo}>
-        {/* Temperature — large display */}
-        <div style={styles.tempRow}>
-          <span style={styles.temp}>{temp}</span>
-          <div style={styles.conditionWrap}>
-            <span style={styles.condition}>{condition}</span>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.97 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3 }}
+      className="flex items-start gap-6 flex-wrap p-6 bg-gradient-to-br from-primary-light to-white border border-primary/20 rounded-2xl"
+    >
+      {/* Weather info column */}
+      <div className="flex-1 min-w-[180px] flex flex-col gap-4">
+        {/* Temperature + condition */}
+        <div className="flex items-end gap-3">
+          <span className="text-5xl font-bold text-primary leading-none tracking-tight">
+            {temp}
+          </span>
+          <div className="flex flex-col pb-1">
+            <span className="text-4xl leading-none">{emoji}</span>
+          </div>
+          <div className="flex flex-col pb-1">
+            <span className="text-base font-semibold text-gray-800">{condition}</span>
             {description && description !== condition && (
-              <span style={styles.description}>{description}</span>
+              <span className="text-xs text-text-muted capitalize">{description}</span>
             )}
           </div>
         </div>
 
-        {/* Detail chips */}
-        <div style={styles.chips}>
-          <Chip label="Feels like" value={feelsLike} />
-          <Chip label="Humidity" value={humidity} />
-          <Chip label="Wind" value={wind} />
+        {/* Stat mini-cards */}
+        <div className="flex gap-2.5 flex-wrap">
+          <StatChip label="Feels like" value={feelsLike} />
+          <StatChip label="Humidity"   value={humidity} />
+          <StatChip label="Wind"       value={wind} />
         </div>
 
         {/* City tag */}
-        <p style={styles.cityTag}>{weather.city}</p>
+        <p className="text-xs text-text-muted">📍 {weather.city}</p>
       </div>
 
-      {/* Outfit photo */}
+      {/* Outfit photo — portrait aspect */}
       {photoUrl && (
-        <img
-          src={photoUrl}
-          alt="Outfit reference"
-          style={styles.photo}
-        />
+        <div className="flex flex-col gap-1.5 flex-shrink-0">
+          <img
+            src={photoUrl}
+            alt="Outfit reference"
+            className="w-[180px] h-60 object-cover rounded-xl shadow-md"
+          />
+          <p className="text-xs text-text-muted italic text-center">
+            Outfit inspiration
+          </p>
+        </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 
-function Chip({ label, value }: { label: string; value: string }) {
+function StatChip({ label, value }: { label: string; value: string }) {
   return (
-    <div style={chipStyles.chip}>
-      <span style={chipStyles.label}>{label}</span>
-      <span style={chipStyles.value}>{value}</span>
+    <div className="bg-white rounded-xl p-3 shadow-sm flex flex-col gap-0.5 min-w-[72px]">
+      <span className="text-[10px] text-text-muted uppercase tracking-wide font-medium">
+        {label}
+      </span>
+      <span className="text-sm font-semibold text-gray-900">{value}</span>
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  card: {
-    display: "flex",
-    alignItems: "flex-start",
-    gap: "24px",
-    padding: "20px 24px",
-    background: "var(--accent-bg)",
-    border: "1px solid var(--accent-border)",
-    borderRadius: "12px",
-    flexWrap: "wrap",
-    maxWidth: "100%",
-    boxSizing: "border-box",
-  },
-  unavailable: {
-    margin: 0,
-    fontSize: "14px",
-    color: "var(--text)",
-  },
-  weatherInfo: {
-    flex: 1,
-    minWidth: "180px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-  },
-  tempRow: {
-    display: "flex",
-    alignItems: "flex-end",
-    gap: "12px",
-  },
-  temp: {
-    fontSize: "48px",
-    fontWeight: 300,
-    color: "var(--text-h)",
-    lineHeight: 1,
-    letterSpacing: "-2px",
-  },
-  conditionWrap: {
-    display: "flex",
-    flexDirection: "column",
-    paddingBottom: "6px",
-  },
-  condition: {
-    fontSize: "16px",
-    fontWeight: 500,
-    color: "var(--text-h)",
-  },
-  description: {
-    fontSize: "13px",
-    color: "var(--text)",
-    textTransform: "capitalize",
-  },
-  chips: {
-    display: "flex",
-    gap: "12px",
-    flexWrap: "wrap",
-  },
-  cityTag: {
-    margin: 0,
-    fontSize: "13px",
-    color: "var(--text)",
-  },
-  photo: {
-    width: "200px",
-    height: "260px",
-    objectFit: "cover",
-    borderRadius: "12px",
-    flexShrink: 0,
-  },
-};
-
-const chipStyles: Record<string, React.CSSProperties> = {
-  chip: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "2px",
-  },
-  label: {
-    fontSize: "11px",
-    color: "var(--text)",
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-  },
-  value: {
-    fontSize: "14px",
-    fontWeight: 500,
-    color: "var(--text-h)",
-  },
-};

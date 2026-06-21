@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import NavBar from "../components/NavBar";
 import EntryForm, { type EntryFormValues } from "../components/EntryForm";
 import { createEntry } from "../api/entries";
@@ -26,7 +27,6 @@ export default function NewEntryPage() {
       navigate(`/diary/${entry.id}`, { replace: true });
     } catch (err: unknown) {
       if (err instanceof ApiError && err.status === 502) {
-        // City lookup failed on the backend
         const detail = err.message;
         if (detail.toLowerCase().includes("city not found")) {
           setError(`Could not find city: ${values.city}`);
@@ -42,52 +42,26 @@ export default function NewEntryPage() {
   }
 
   return (
-    <div style={styles.page}>
+    <div className="flex flex-col min-h-svh bg-surface">
       <NavBar />
 
-      <div style={styles.container}>
-        <div style={styles.card}>
-          <h1 style={styles.title}>New entry</h1>
-          <p style={styles.subtitle}>Tell us where you are and how you feel today.</p>
+      <div className="flex justify-center px-6 py-10">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+          className="w-full max-w-lg bg-white rounded-2xl border border-border shadow-sm p-8"
+        >
+          <h1 className="text-xl font-bold text-gray-900 tracking-tight mb-1">
+            New entry
+          </h1>
+          <p className="text-sm text-text-muted mb-7">
+            Tell us where you are and how you feel today.
+          </p>
 
           <EntryForm onSubmit={handleSubmit} submitting={submitting} error={error} />
-        </div>
+        </motion.div>
       </div>
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  page: {
-    display: "flex",
-    flexDirection: "column",
-    minHeight: "100svh",
-    textAlign: "left",
-  },
-  container: {
-    display: "flex",
-    justifyContent: "center",
-    padding: "40px 24px",
-  },
-  card: {
-    width: "100%",
-    maxWidth: "520px",
-    background: "var(--bg)",
-    border: "1px solid var(--border)",
-    borderRadius: "12px",
-    padding: "36px 32px",
-    boxShadow: "var(--shadow)",
-  },
-  title: {
-    margin: "0 0 4px",
-    fontSize: "24px",
-    fontWeight: 600,
-    letterSpacing: "-0.4px",
-    color: "var(--text-h)",
-  },
-  subtitle: {
-    margin: "0 0 28px",
-    fontSize: "14px",
-    color: "var(--text)",
-  },
-};

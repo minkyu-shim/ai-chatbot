@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { CloudSun } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 
 export default function LoginPage() {
@@ -17,7 +19,7 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
-      navigate("/", { replace: true });
+      navigate("/diary", { replace: true });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
@@ -26,20 +28,37 @@ export default function LoginPage() {
   }
 
   return (
-    <main style={styles.page}>
-      <div style={styles.card}>
-        <h1 style={styles.title}>Sign in</h1>
-        <p style={styles.subtitle}>LLM Chat — EPITA S4</p>
+    <main className="min-h-svh flex items-center justify-center p-6 bg-gradient-to-br from-primary-light via-white to-accent-light">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="w-full max-w-sm bg-white rounded-2xl shadow-lg border border-border p-10"
+      >
+        {/* Brand icon */}
+        <div className="flex flex-col items-center mb-6">
+          <CloudSun size={48} className="text-primary mb-3" />
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-1">
+            Sign in
+          </h1>
+          <p className="text-sm text-text-muted text-center">
+            Weathering with You
+          </p>
+        </div>
 
+        {/* Error box */}
         {error && (
-          <div style={styles.errorBox} role="alert">
+          <div
+            role="alert"
+            className="mb-4 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg"
+          >
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} noValidate>
-          <div style={styles.field}>
-            <label htmlFor="email" style={styles.label}>
+        <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="email" className="text-sm font-medium text-gray-800">
               Email
             </label>
             <input
@@ -50,12 +69,12 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={submitting}
-              style={styles.input}
+              className="px-3 py-2.5 text-sm rounded-lg border border-border focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition disabled:opacity-60 w-full"
             />
           </div>
 
-          <div style={styles.field}>
-            <label htmlFor="password" style={styles.label}>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="password" className="text-sm font-medium text-gray-800">
               Password
             </label>
             <input
@@ -66,111 +85,26 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={submitting}
-              style={styles.input}
+              className="px-3 py-2.5 text-sm rounded-lg border border-border focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition disabled:opacity-60 w-full"
             />
           </div>
 
-          <button type="submit" disabled={submitting} style={styles.button}>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="mt-1 w-full py-2.5 text-sm font-medium bg-primary hover:bg-primary/90 text-white rounded-lg transition disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
+          >
             {submitting ? "Signing in…" : "Sign in"}
           </button>
         </form>
 
-        <p style={styles.switchLink}>
+        <p className="mt-5 text-sm text-center text-text-muted">
           Don't have an account?{" "}
-          <Link to="/signup" style={styles.link}>
+          <Link to="/signup" className="text-primary font-medium no-underline hover:underline">
             Sign up
           </Link>
         </p>
-      </div>
+      </motion.div>
     </main>
   );
 }
-
-// ── Inline styles ─────────────────────────────────────────────────────────────
-// Using inline styles to avoid adding a CSS file dependency; keeps the
-// component self-contained and easy to swap out for a proper design system.
-
-const styles: Record<string, React.CSSProperties> = {
-  page: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: "100svh",
-    padding: "24px",
-    boxSizing: "border-box",
-  },
-  card: {
-    width: "100%",
-    maxWidth: "400px",
-    background: "var(--bg)",
-    border: "1px solid var(--border)",
-    borderRadius: "12px",
-    padding: "40px 36px",
-    boxShadow: "var(--shadow)",
-  },
-  title: {
-    margin: "0 0 4px",
-    fontSize: "28px",
-    letterSpacing: "-0.5px",
-    color: "var(--text-h)",
-  },
-  subtitle: {
-    margin: "0 0 28px",
-    fontSize: "14px",
-    color: "var(--text)",
-  },
-  errorBox: {
-    marginBottom: "16px",
-    padding: "10px 14px",
-    background: "rgba(220, 38, 38, 0.1)",
-    border: "1px solid rgba(220, 38, 38, 0.4)",
-    borderRadius: "6px",
-    color: "#dc2626",
-    fontSize: "14px",
-  },
-  field: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "6px",
-    marginBottom: "16px",
-  },
-  label: {
-    fontSize: "14px",
-    fontWeight: 500,
-    color: "var(--text-h)",
-  },
-  input: {
-    padding: "9px 12px",
-    fontSize: "15px",
-    border: "1px solid var(--border)",
-    borderRadius: "6px",
-    background: "var(--bg)",
-    color: "var(--text-h)",
-    outline: "none",
-    width: "100%",
-    boxSizing: "border-box",
-  },
-  button: {
-    width: "100%",
-    marginTop: "8px",
-    padding: "10px",
-    fontSize: "15px",
-    fontWeight: 500,
-    background: "var(--accent)",
-    color: "#fff",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-  },
-  switchLink: {
-    marginTop: "20px",
-    fontSize: "14px",
-    textAlign: "center",
-    color: "var(--text)",
-  },
-  link: {
-    color: "var(--accent)",
-    textDecoration: "none",
-    fontWeight: 500,
-  },
-};

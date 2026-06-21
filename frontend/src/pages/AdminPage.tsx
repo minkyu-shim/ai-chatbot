@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { ShieldCheck } from "lucide-react";
 import NavBar from "../components/NavBar";
 import { listAllEntries } from "../api/admin";
 import type { AdminEntrySummary } from "../types";
 
 /**
- * Admin-only page that lists all users' entries in a simple table.
+ * Admin-only page that lists all users' entries in a table.
  * Access is gated by role on the backend; a 403 is surfaced as a friendly message.
  */
 export default function AdminPage() {
@@ -20,8 +21,11 @@ export default function AdminPage() {
       })
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : "Access denied";
-        // 403 or any error: show a friendly access-denied message
-        setError(msg.includes("Failed to fetch") ? "Could not connect to server. Is the backend running?" : msg);
+        setError(
+          msg.includes("Failed to fetch")
+            ? "Could not connect to server. Is the backend running?"
+            : msg
+        );
       })
       .finally(() => {
         setLoading(false);
@@ -29,168 +33,112 @@ export default function AdminPage() {
   }, []);
 
   return (
-    <div style={styles.page}>
+    <div className="flex flex-col min-h-svh bg-surface">
       <NavBar />
 
-      <div style={styles.header}>
-        <h1 style={styles.title}>Admin — All Entries</h1>
-      </div>
-
-      {loading && <p style={styles.status}>Loading…</p>}
-
-      {!loading && error && (
-        <div style={styles.errorWrap}>
-          <p style={styles.errorMsg}>You don't have access to this page.</p>
-          <Link to="/diary" style={styles.backLink}>Back to diary</Link>
+      <div className="max-w-5xl mx-auto w-full px-6 py-8">
+        {/* Header */}
+        <div className="flex items-center gap-2.5 mb-6">
+          <ShieldCheck size={22} className="text-primary" />
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 tracking-tight">Admin Panel</h1>
+            {!loading && !error && (
+              <p className="text-sm text-text-muted mt-0.5">
+                {entries.length} {entries.length === 1 ? "entry" : "entries"} total
+              </p>
+            )}
+          </div>
         </div>
-      )}
 
-      {!loading && !error && (
-        <div style={styles.tableWrap}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>Date</th>
-                <th style={styles.th}>User</th>
-                <th style={styles.th}>City</th>
-                <th style={styles.th}>Mood</th>
-                <th style={styles.th}>Weather</th>
-                <th style={styles.th}>Created at</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((e) => (
-                <tr key={e.id} style={styles.tr}>
-                  <td style={styles.td}>
-                    {new Date(e.entry_date + "T00:00:00").toLocaleDateString(undefined, {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </td>
-                  <td style={styles.td}>{e.user_email}</td>
-                  <td style={styles.td}>{e.city}</td>
-                  <td style={styles.td}>{e.mood}</td>
-                  <td style={styles.td}>
-                    {e.weather ? (
-                      <span style={styles.weatherChip}>
-                        {e.weather.temp !== null ? `${Math.round(e.weather.temp)}°C` : "?°C"}
-                        {e.weather.condition ? ` · ${e.weather.condition}` : ""}
+        {/* Loading */}
+        {loading && (
+          <p className="text-center py-12 text-sm text-text-muted">Loading…</p>
+        )}
+
+        {/* Error / access denied */}
+        {!loading && error && (
+          <div className="flex flex-col items-center gap-4 py-20">
+            <p className="text-base text-text-muted">You don't have access to this page.</p>
+            <Link
+              to="/diary"
+              className="text-sm font-medium text-primary no-underline hover:underline"
+            >
+              Back to diary
+            </Link>
+          </div>
+        )}
+
+        {/* Table */}
+        {!loading && !error && (
+          <div className="overflow-x-auto rounded-2xl border border-border bg-white shadow-sm">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="border-b border-border">
+                  {["Date", "User", "City", "Mood", "Weather", "Created at"].map((h) => (
+                    <th
+                      key={h}
+                      className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wide whitespace-nowrap"
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {entries.map((e, i) => (
+                  <tr
+                    key={e.id}
+                    className={`hover:bg-primary-light transition-colors ${i % 2 === 1 ? "bg-surface" : ""}`}
+                  >
+                    <td className="px-4 py-3 text-gray-800 whitespace-nowrap">
+                      {new Date(e.entry_date + "T00:00:00").toLocaleDateString(undefined, {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </td>
+                    <td className="px-4 py-3 text-gray-800 max-w-[180px] truncate">
+                      {e.user_email}
+                    </td>
+                    <td className="px-4 py-3 text-gray-800">{e.city}</td>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center px-2.5 py-0.5 text-xs font-semibold rounded-full bg-accent-light text-accent border border-accent/30">
+                        {e.mood}
                       </span>
-                    ) : (
-                      <span style={styles.na}>—</span>
-                    )}
-                  </td>
-                  <td style={styles.td}>
-                    {new Date(e.created_at).toLocaleString(undefined, {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </td>
-                </tr>
-              ))}
-              {entries.length === 0 && (
-                <tr>
-                  <td colSpan={6} style={styles.emptyCell}>No entries found.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {e.weather ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 text-xs rounded-full bg-primary-light text-primary border border-primary/30 whitespace-nowrap">
+                          {e.weather.temp !== null ? `${Math.round(e.weather.temp)}°C` : "?°C"}
+                          {e.weather.condition ? ` · ${e.weather.condition}` : ""}
+                        </span>
+                      ) : (
+                        <span className="text-border">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-text-muted whitespace-nowrap">
+                      {new Date(e.created_at).toLocaleString(undefined, {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </td>
+                  </tr>
+                ))}
+                {entries.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-text-muted">
+                      No entries found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  page: {
-    display: "flex",
-    flexDirection: "column",
-    minHeight: "100svh",
-    textAlign: "left",
-  },
-  header: {
-    padding: "28px 24px 20px",
-  },
-  title: {
-    margin: 0,
-    fontSize: "22px",
-    fontWeight: 600,
-    letterSpacing: "-0.3px",
-    color: "var(--text-h)",
-  },
-  status: {
-    textAlign: "center",
-    padding: "48px 0",
-    color: "var(--text)",
-    fontSize: "15px",
-  },
-  errorWrap: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "12px",
-    padding: "80px 24px",
-  },
-  errorMsg: {
-    margin: 0,
-    fontSize: "16px",
-    color: "var(--text)",
-  },
-  backLink: {
-    fontSize: "14px",
-    color: "var(--accent)",
-    textDecoration: "none",
-    fontWeight: 500,
-  },
-  tableWrap: {
-    overflowX: "auto",
-    padding: "0 24px 40px",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    fontSize: "14px",
-  },
-  th: {
-    textAlign: "left",
-    padding: "10px 12px",
-    fontSize: "12px",
-    fontWeight: 600,
-    color: "var(--text)",
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-    borderBottom: "2px solid var(--border)",
-    whiteSpace: "nowrap",
-  },
-  tr: {
-    borderBottom: "1px solid var(--border)",
-  },
-  td: {
-    padding: "12px",
-    color: "var(--text-h)",
-    verticalAlign: "middle",
-    overflowWrap: "anywhere",
-  },
-  weatherChip: {
-    display: "inline-block",
-    fontSize: "12px",
-    color: "var(--text)",
-    background: "var(--accent-bg)",
-    border: "1px solid var(--accent-border)",
-    borderRadius: "20px",
-    padding: "2px 10px",
-    whiteSpace: "nowrap",
-  },
-  na: {
-    color: "var(--border)",
-  },
-  emptyCell: {
-    padding: "24px 12px",
-    textAlign: "center",
-    color: "var(--text)",
-  },
-};

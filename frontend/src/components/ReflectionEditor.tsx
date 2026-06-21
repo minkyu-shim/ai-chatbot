@@ -12,11 +12,11 @@ type Props = {
  * Saves via PATCH and shows a brief "Saved" confirmation.
  */
 export default function ReflectionEditor({ entry, onSaved }: Props) {
-  const [outfitWorn, setOutfitWorn] = useState(entry.outfit_worn ?? "");
-  const [reflection, setReflection] = useState(entry.reflection ?? "");
-  const [saving, setSaving] = useState(false);
-  const [savedMsg, setSavedMsg] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [outfitWorn,  setOutfitWorn]  = useState(entry.outfit_worn ?? "");
+  const [reflection,  setReflection]  = useState(entry.reflection  ?? "");
+  const [saving,      setSaving]      = useState(false);
+  const [savedMsg,    setSavedMsg]    = useState(false);
+  const [error,       setError]       = useState<string | null>(null);
 
   async function handleSave() {
     setError(null);
@@ -24,10 +24,10 @@ export default function ReflectionEditor({ entry, onSaved }: Props) {
     try {
       const updated = await updateEntry(entry.id, {
         outfit_worn: outfitWorn.trim() || null,
-        reflection: reflection.trim() || null,
+        reflection:  reflection.trim()  || null,
       });
       onSaved(updated);
-      // Show confirmation for 2 seconds
+      // Show "Saved" confirmation for 2 s
       setSavedMsg(true);
       setTimeout(() => setSavedMsg(false), 2000);
     } catch (err: unknown) {
@@ -37,18 +37,27 @@ export default function ReflectionEditor({ entry, onSaved }: Props) {
     }
   }
 
+  /* Shared textarea classes */
+  const textareaCls =
+    "px-3 py-2.5 text-sm rounded-lg border border-border focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition disabled:opacity-60 w-full resize-y font-inherit leading-relaxed";
+
   return (
-    <section style={styles.section}>
-      <h2 style={styles.heading}>Reflection</h2>
+    <section className="bg-white border border-border rounded-2xl p-6 text-left">
+      <h2 className="text-base font-semibold text-gray-900 tracking-tight mb-5">
+        Reflection
+      </h2>
 
       {error && (
-        <div style={styles.errorBox} role="alert">
+        <div
+          role="alert"
+          className="mb-4 px-4 py-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg"
+        >
           {error}
         </div>
       )}
 
-      <div style={styles.field}>
-        <label htmlFor="outfit_worn" style={styles.label}>
+      <div className="flex flex-col gap-1.5 mb-4">
+        <label htmlFor="outfit_worn" className="text-sm font-medium text-gray-800">
           What I actually wore
         </label>
         <textarea
@@ -58,12 +67,12 @@ export default function ReflectionEditor({ entry, onSaved }: Props) {
           value={outfitWorn}
           onChange={(e) => setOutfitWorn(e.target.value)}
           disabled={saving}
-          style={styles.textarea}
+          className={textareaCls}
         />
       </div>
 
-      <div style={styles.field}>
-        <label htmlFor="reflection" style={styles.label}>
+      <div className="flex flex-col gap-1.5 mb-5">
+        <label htmlFor="reflection" className="text-sm font-medium text-gray-800">
           How it felt
         </label>
         <textarea
@@ -73,98 +82,24 @@ export default function ReflectionEditor({ entry, onSaved }: Props) {
           value={reflection}
           onChange={(e) => setReflection(e.target.value)}
           disabled={saving}
-          style={styles.textarea}
+          className={textareaCls}
         />
       </div>
 
-      <div style={styles.actions}>
+      <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={handleSave}
           disabled={saving}
-          style={{
-            ...styles.saveBtn,
-            opacity: saving ? 0.6 : 1,
-            cursor: saving ? "not-allowed" : "pointer",
-          }}
+          className="px-5 py-2 text-sm font-medium bg-primary hover:bg-primary/90 text-white rounded-lg transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
         >
           {saving ? "Saving…" : "Save"}
         </button>
 
         {savedMsg && (
-          <span style={styles.savedMsg}>Saved</span>
+          <span className="text-sm text-green-600 font-medium">Saved</span>
         )}
       </div>
     </section>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  section: {
-    background: "var(--bg)",
-    border: "1px solid var(--border)",
-    borderRadius: "12px",
-    padding: "20px 24px",
-    textAlign: "left",
-  },
-  heading: {
-    margin: "0 0 20px",
-    fontSize: "16px",
-    fontWeight: 600,
-    color: "var(--text-h)",
-    letterSpacing: "-0.2px",
-  },
-  errorBox: {
-    marginBottom: "12px",
-    padding: "10px 14px",
-    background: "rgba(220, 38, 38, 0.1)",
-    border: "1px solid rgba(220, 38, 38, 0.4)",
-    borderRadius: "6px",
-    color: "#dc2626",
-    fontSize: "14px",
-  },
-  field: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "6px",
-    marginBottom: "16px",
-  },
-  label: {
-    fontSize: "14px",
-    fontWeight: 500,
-    color: "var(--text-h)",
-  },
-  textarea: {
-    padding: "9px 12px",
-    fontSize: "15px",
-    border: "1px solid var(--border)",
-    borderRadius: "6px",
-    background: "var(--bg)",
-    color: "var(--text-h)",
-    outline: "none",
-    width: "100%",
-    boxSizing: "border-box",
-    resize: "vertical",
-    fontFamily: "inherit",
-    lineHeight: "1.5",
-  },
-  actions: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-  },
-  saveBtn: {
-    padding: "8px 20px",
-    fontSize: "14px",
-    fontWeight: 500,
-    background: "var(--accent)",
-    color: "#fff",
-    border: "none",
-    borderRadius: "6px",
-  },
-  savedMsg: {
-    fontSize: "14px",
-    color: "var(--accent)",
-    fontWeight: 500,
-  },
-};

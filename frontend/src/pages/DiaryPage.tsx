@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { BookOpen, PenLine } from "lucide-react";
 import NavBar from "../components/NavBar";
 import EntryFeed from "../components/EntryFeed";
 import { listEntries } from "../api/entries";
@@ -20,7 +22,11 @@ export default function DiaryPage() {
       })
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : "Failed to load entries";
-        setError(msg.includes("Failed to fetch") ? "Could not connect to server. Is the backend running?" : msg);
+        setError(
+          msg.includes("Failed to fetch")
+            ? "Could not connect to server. Is the backend running?"
+            : msg
+        );
       })
       .finally(() => {
         setLoading(false);
@@ -28,48 +34,41 @@ export default function DiaryPage() {
   }, []);
 
   return (
-    <div style={styles.page}>
+    <div className="flex flex-col min-h-svh bg-surface">
       <NavBar />
 
-      <div style={styles.header}>
-        <h1 style={styles.title}>Your diary</h1>
-        <Link to="/diary/new" style={styles.newButton}>
+      {/* Page header */}
+      <div className="flex items-center justify-between px-6 pt-8 pb-5 max-w-3xl w-full mx-auto">
+        <div className="flex items-center gap-2.5">
+          <BookOpen size={22} className="text-primary" />
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 tracking-tight leading-tight">
+              Your Outfit Journal
+            </h1>
+            <p className="text-sm text-text-muted mt-0.5">
+              Track your daily look, weather and mood.
+            </p>
+          </div>
+        </div>
+
+        <Link
+          to="/diary/new"
+          className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent/90 text-white text-sm font-medium rounded-lg no-underline transition-colors"
+        >
+          <PenLine size={15} />
           New entry
         </Link>
       </div>
 
-      <EntryFeed entries={entries} loading={loading} error={error} />
+      {/* Feed */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="flex-1 px-6 pb-12 max-w-3xl w-full mx-auto"
+      >
+        <EntryFeed entries={entries} loading={loading} error={error} />
+      </motion.div>
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  page: {
-    display: "flex",
-    flexDirection: "column",
-    minHeight: "100svh",
-    textAlign: "left",
-  },
-  header: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "28px 24px 20px",
-  },
-  title: {
-    margin: 0,
-    fontSize: "26px",
-    fontWeight: 600,
-    letterSpacing: "-0.4px",
-    color: "var(--text-h)",
-  },
-  newButton: {
-    padding: "9px 18px",
-    background: "var(--accent)",
-    color: "#fff",
-    borderRadius: "6px",
-    textDecoration: "none",
-    fontSize: "14px",
-    fontWeight: 500,
-  },
-};

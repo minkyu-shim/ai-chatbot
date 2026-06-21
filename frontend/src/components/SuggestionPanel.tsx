@@ -1,4 +1,6 @@
+import { AnimatePresence, motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
+import { Sparkles } from "lucide-react";
 import type { StreamState } from "../hooks/useSuggestionStream";
 
 type Props = {
@@ -9,104 +11,111 @@ type Props = {
 };
 
 /**
- * Renders the AI outfit suggestion.
+ * Renders the AI outfit suggestion panel.
  *
  * State transitions:
  *   idle + persisted content → show persisted markdown
  *   idle + no content        → "Waiting to start…"
- *   meta                     → "Thinking…" spinner text
- *   streaming                → live markdown with blinking cursor appended
- *   done                     → final markdown (cursor removed)
- *   error                    → red error banner, partial text below if any
+ *   meta                     → animated thinking dots
+ *   streaming                → live markdown with blinking orange cursor
+ *   done                     → final markdown (cursor removed, fadeIn)
+ *   error                    → red error banner + partial text if any
  */
-export default function SuggestionPanel({ state, text, error, persistedAssistantContent }: Props) {
+export default function SuggestionPanel({
+  state,
+  text,
+  error,
+  persistedAssistantContent,
+}: Props) {
   return (
-    <section style={styles.panel}>
-      <h2 style={styles.heading}>AI Suggestion</h2>
+    <section className="bg-white border border-border rounded-2xl p-6 text-left">
+      {/* Heading */}
+      <div className="flex items-center gap-2 mb-4">
+        <Sparkles size={18} className="text-accent" />
+        <h2 className="text-base font-semibold text-gray-900 tracking-tight">
+          Outfit Suggestion
+        </h2>
+      </div>
 
-      {/* ── Error state ──────────────────────────────────────────── */}
+      {/* ── Error state ─────────────────────────────────────────────────────── */}
       {state === "error" && (
         <>
-          <div style={styles.errorBox} role="alert">
+          <div
+            role="alert"
+            className="mb-3 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg"
+          >
             Could not generate suggestion: {error}
           </div>
           {text && (
-            <div style={styles.markdownWrap}>
-              <ReactMarkdown>{text}</ReactMarkdown>
-            </div>
+            <MarkdownBody text={text} streaming={false} />
           )}
         </>
       )}
 
-      {/* ── Meta state (waiting for first token) ─────────────────── */}
+      {/* ── Meta state: thinking dots ────────────────────────────────────────── */}
       {state === "meta" && (
-        <p style={styles.status}>Thinking…</p>
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm text-text-muted italic">Thinking</span>
+          {[0, 0.2, 0.4].map((delay, i) => (
+            <motion.span
+              key={i}
+              className="inline-block w-1.5 h-1.5 rounded-full bg-primary"
+              animate={{ opacity: [1, 0.4, 1] }}
+              transition={{
+                duration: 1,
+                repeat: Infinity,
+                delay,
+                ease: "easeInOut",
+              }}
+            />
+          ))}
+        </div>
       )}
 
-      {/* ── Streaming state ──────────────────────────────────────── */}
+      {/* ── Streaming state ──────────────────────────────────────────────────── */}
       {state === "streaming" && (
-        <div style={styles.markdownWrap}>
-          {/* The "▍" cursor is appended inline; ReactMarkdown renders the full text */}
-          <ReactMarkdown>{text + "▍"}</ReactMarkdown>
-        </div>
+        <MarkdownBody text={text} streaming={true} />
       )}
 
-      {/* ── Done state ───────────────────────────────────────────── */}
-      {state === "done" && (
-        <div style={styles.markdownWrap}>
-          <ReactMarkdown>{text}</ReactMarkdown>
-        </div>
-      )}
+      {/* ── Done state ───────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {state === "done" && (
+          <motion.div
+            key="done"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <MarkdownBody text={text} streaming={false} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* ── Idle state ───────────────────────────────────────────── */}
+      {/* ── Idle state ───────────────────────────────────────────────────────── */}
       {state === "idle" && (
         persistedAssistantContent ? (
-          <div style={styles.markdownWrap}>
-            <ReactMarkdown>{persistedAssistantContent}</ReactMarkdown>
-          </div>
+          <MarkdownBody text={persistedAssistantContent} streaming={false} />
         ) : (
-          <p style={styles.status}>Waiting to start…</p>
+          <p className="text-sm text-text-muted italic">Waiting to start…</p>
         )
       )}
     </section>
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  panel: {
-    background: "var(--bg)",
-    border: "1px solid var(--border)",
-    borderRadius: "12px",
-    padding: "20px 24px",
-    textAlign: "left",
-  },
-  heading: {
-    margin: "0 0 16px",
-    fontSize: "16px",
-    fontWeight: 600,
-    color: "var(--text-h)",
-    letterSpacing: "-0.2px",
-  },
-  status: {
-    margin: 0,
-    fontSize: "14px",
-    color: "var(--text)",
-    fontStyle: "italic",
-  },
-  errorBox: {
-    marginBottom: "12px",
-    padding: "10px 14px",
-    background: "rgba(220, 38, 38, 0.1)",
-    border: "1px solid rgba(220, 38, 38, 0.4)",
-    borderRadius: "6px",
-    color: "#dc2626",
-    fontSize: "14px",
-  },
-  markdownWrap: {
-    fontSize: "15px",
-    lineHeight: "1.65",
-    color: "var(--text-h)",
-    // Ensure markdown content is left-aligned and flows naturally
-    textAlign: "left",
-  },
-};
+/**
+ * Shared markdown renderer.
+ * In streaming mode the orange blinking cursor "▍" is appended inline.
+ */
+function MarkdownBody({ text, streaming }: { text: string; streaming: boolean }) {
+  return (
+    <div className="border-l-4 border-primary bg-surface rounded-r-xl px-4 py-3">
+      <div className="suggestion-markdown text-sm leading-relaxed text-gray-800">
+        <ReactMarkdown>{streaming ? text + " " : text}</ReactMarkdown>
+        {streaming && (
+          <span className="streaming-cursor ml-0.5">▍</span>
+        )}
+      </div>
+    </div>
+  );
+}
